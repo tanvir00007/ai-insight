@@ -1,6 +1,6 @@
 {
   "runtime": "llamacpp",
-  "baseUrl": "http://172.26.21.25:8080",
+  "baseUrl": "http://localhost:8080",
   "model": "qwen2.5-7b-instruct-q8_0-00001-of-00003.gguf",
   "apiKey": "sk-no-key-required",
   "temperature": 0.2,
@@ -21,7 +21,7 @@
   "cudaVisibleDevices": "",
   "serverBackend": "external",
   "serverExecutable": "",
-  "serverHost": "172.26.21.25",
+  "serverHost": "127.0.0.1",
   "serverPort": 8080,
   "serverBatchSize": 512,
   "serverUbatchSize": 128,

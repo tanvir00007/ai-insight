@@ -15,5 +15,6 @@ ai-server.err
 *.zip
 .env
 .env.*
+ai-server/config.json
 ai-server/logs/
 tools/

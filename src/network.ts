@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const AI_GATEWAY_PORT = 8787;
-const KNOWN_DEV_HOST = '172.28.18.134';
+const CONFIGURED_GATEWAY_HOST = process.env.EXPO_PUBLIC_AI_GATEWAY_HOST;
 
 type ExpoConstantsShape = {
   expoConfig?: { hostUri?: string };
@@ -24,7 +24,7 @@ export function getAiGatewayUrls() {
 
   const urls = [
     detectedHost ? `http://${detectedHost}:${AI_GATEWAY_PORT}` : null,
-    `http://${KNOWN_DEV_HOST}:${AI_GATEWAY_PORT}`,
+    CONFIGURED_GATEWAY_HOST ? `http://${CONFIGURED_GATEWAY_HOST}:${AI_GATEWAY_PORT}` : null,
     Platform.OS === 'web' ? `http://localhost:${AI_GATEWAY_PORT}` : null,
   ].filter((url): url is string => Boolean(url));
 

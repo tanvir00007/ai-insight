@@ -6,15 +6,35 @@ const { spawn, spawnSync } = require('child_process');
 const PORT = Number(process.env.AI_GATEWAY_PORT || 8787);
 const ROOT = __dirname;
 const CONFIG_PATH = path.join(ROOT, 'config.json');
+const CONFIG_EXAMPLE_PATH = path.join(ROOT, 'config.example.json');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const LOG_DIR = path.join(ROOT, 'logs');
 const TRACE_LOG_PATH = path.join(LOG_DIR, 'ai-trace.log');
 const MAX_LOG_CHARS = 6000;
+const LOCAL_ORIGINS = new Set(['localhost', '127.0.0.1', '[::1]'].map((host) => `http://${host}:${PORT}`));
+const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+// Routes the phone app calls. Everything else only answers on the computer running the gateway.
+const PHONE_ROUTES = new Set([
+  '/api/ai/trace',
+  '/api/ai/chat',
+  '/api/ai/plan',
+  '/api/ai/intent',
+  '/api/ai/query-plan',
+  '/api/ai/compose',
+]);
 let runtimeProcess = null;
 let appProcess = null;
 
 function readConfig() {
+  if (!fs.existsSync(CONFIG_PATH)) fs.copyFileSync(CONFIG_EXAMPLE_PATH, CONFIG_PATH);
   return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+}
+
+function isAllowedRequest(req, url) {
+  const origin = req.headers.origin;
+  if (origin && !LOCAL_ORIGINS.has(origin)) return false;
+  if (PHONE_ROUTES.has(url.pathname)) return true;
+  return LOOPBACK_ADDRESSES.has(req.socket.remoteAddress) && LOCAL_ORIGINS.has(`http://${req.headers.host}`);
 }
 
 function writeConfig(config) {
@@ -45,7 +65,7 @@ function publicConfig(config) {
     cudaVisibleDevices: '0',
     serverBackend: 'cuda',
     serverExecutable: path.join(ROOT, '..', 'tools', 'llama-win-cpu', 'llama-server.exe'),
-    serverHost: '0.0.0.0',
+    serverHost: '127.0.0.1',
     serverPort: 8080,
     serverBatchSize: 512,
     serverUbatchSize: 128,
@@ -64,20 +84,12 @@ function publicConfig(config) {
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
-  res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  });
+  res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(body);
 }
 
 function sendText(res, status, body, contentType = 'text/plain') {
-  res.writeHead(status, {
-    'Content-Type': contentType,
-    'Access-Control-Allow-Origin': '*',
-  });
+  res.writeHead(status, { 'Content-Type': contentType });
   res.end(body);
 }
 
@@ -137,7 +149,7 @@ function buildRuntimeCommand(config) {
     '-m',
     model,
     '--host',
-    String(config.serverHost || '0.0.0.0'),
+    String(config.serverHost || '127.0.0.1'),
     '--port',
     String(config.serverPort || inferRuntimePort(config)),
     '-c',
@@ -1013,11 +1025,6 @@ function fallbackAnswer(task, payload) {
 }
 
 async function handleApi(req, res, url) {
-  if (req.method === 'OPTIONS') {
-    sendJson(res, 204, {});
-    return;
-  }
-
   if (url.pathname === '/api/ai/trace' && req.method === 'POST') {
     const body = await readBody(req);
     traceLog(body.traceId, `mobile_${body.stage || 'trace'}`, body);
@@ -1540,8 +1547,12 @@ function serveStatic(req, res, url) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
   try {
+    const url = new URL(req.url, 'http://localhost');
+    if (!isAllowedRequest(req, url)) {
+      sendJson(res, 403, { error: 'This request is only allowed from the computer running the gateway.' });
+      return;
+    }
     if (url.pathname.startsWith('/api/')) {
       await handleApi(req, res, url);
       return;
