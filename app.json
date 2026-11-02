@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Microfinance Field MVP",
+    "slug": "microfinance-field-mvp",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "backgroundColor": "#155E63"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

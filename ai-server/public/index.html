@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Gateway Configuration</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">AI Gateway</p>
+          <h1>Microfinance AI Configuration</h1>
+          <p>Configure the local LLM runtime, planner behavior, and app launch commands from one place.</p>
+        </div>
+        <div class="toolbar">
+          <button id="healthBtn" type="button">Health</button>
+          <button id="runtimeStatusBtn" class="button-secondary" type="button">Status</button>
+          <button id="startRuntimeBtn" type="button">Start Runtime</button>
+          <button id="restartRuntimeBtn" class="button-secondary" type="button">Restart</button>
+          <button id="stopRuntimeBtn" class="button-danger" type="button">Stop Runtime</button>
+        </div>
+      </header>
+
+      <section class="status-grid">
+        <div>
+          <span class="metric-label">Gateway</span>
+          <strong id="gatewayMetric">Unknown</strong>
+        </div>
+        <div>
+          <span class="metric-label">Runtime</span>
+          <strong id="runtimeMetric">Unknown</strong>
+        </div>
+        <div>
+          <span class="metric-label">Runtime PID</span>
+          <strong id="pidMetric">-</strong>
+        </div>
+        <div>
+          <span class="metric-label">App PID</span>
+          <strong id="appPidMetric">-</strong>
+        </div>
+      </section>
+
+      <div class="grid">
+        <form id="configForm" class="panel">
+          <div class="section-head">
+            <h2>Runtime Setup</h2>
+            <button type="submit">Save Configuration</button>
+          </div>
+
+          <label>
+            Preset
+            <select id="presetSelect">
+              <option value="">Choose a preset...</option>
+              <option value="cpuSafe">llama.cpp CPU Safe</option>
+              <option value="remoteMsi">Remote Qwen2.5 7B llama.cpp</option>
+              <option value="edgeGpu9b">MSI EdgeXpert 9B GPU</option>
+              <option value="edgeCpu9b">MSI EdgeXpert 9B CPU</option>
+              <option value="ollama">Ollama Local</option>
+              <option value="external">External OpenAI-Compatible</option>
+            </select>
+          </label>
+
+          <div class="two">
+            <label>
+              Runtime API
+              <select name="runtime">
+                <option value="llamacpp">llama.cpp / OpenAI Compatible</option>
+                <option value="ollama">Ollama</option>
+              </select>
+            </label>
+            <label>
+              Base URL
+              <input name="baseUrl" placeholder="http://localhost:8080" />
+            </label>
+          </div>
+
+          <label>
+            Model
+            <input name="model" placeholder="qwen2.5-7b-instruct-q8_0-00001-of-00003.gguf or model path" />
+          </label>
+
+          <div class="two">
+            <label>
+              API key
+              <input name="apiKey" placeholder="sk-no-key-required" />
+            </label>
+            <label>
+              Structured output
+              <select name="structuredOutputMode">
+                <option value="json_schema">JSON schema</option>
+                <option value="json_object">JSON object</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+          </div>
+
+          <p class="section-title">Launcher</p>
+          <div class="two">
+            <label>
+              Server backend
+              <select name="serverBackend">
+                <option value="cuda">llama.cpp CUDA/GPU</option>
+                <option value="cpu">llama.cpp CPU</option>
+                <option value="ollama">Ollama</option>
+                <option value="external">External only</option>
+              </select>
+            </label>
+            <label>
+              Runtime executable
+              <input name="serverExecutable" placeholder="D:\path\llama-server.exe" />
+            </label>
+          </div>
+
+          <div class="three">
+            <label>
+              Host
+              <input name="serverHost" placeholder="0.0.0.0" />
+            </label>
+            <label>
+              Port
+              <input name="serverPort" type="number" min="1" max="65535" />
+            </label>
+            <label>
+              Auto-start
+              <select name="autoStartRuntime">
+                <option value="false">Off</option>
+                <option value="true">On</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            App start command
+            <input name="appStartCommand" placeholder="npm.cmd start" />
+          </label>
+
+          <div class="button-row">
+            <button id="startAppBtn" class="button-secondary" type="button">Start App</button>
+            <button id="stopAppBtn" class="button-danger" type="button">Stop App</button>
+          </div>
+
+          <p class="section-title">Performance</p>
+          <div class="three">
+            <label>
+              Context
+              <input name="contextLength" type="number" min="512" step="512" />
+            </label>
+            <label>
+              CPU threads
+              <input name="cpuThreads" type="number" min="1" />
+            </label>
+            <label>
+              GPU
+              <select name="gpuEnabled">
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="three">
+            <label>
+              GPU layers
+              <input name="gpuLayers" type="number" min="0" />
+            </label>
+            <label>
+              CUDA devices
+              <input name="cudaVisibleDevices" placeholder="0" />
+            </label>
+            <label>
+              Parallel
+              <input name="serverParallel" type="number" min="1" />
+            </label>
+          </div>
+
+          <div class="three">
+            <label>
+              Batch
+              <input name="serverBatchSize" type="number" min="1" />
+            </label>
+            <label>
+              Micro batch
+              <input name="serverUbatchSize" type="number" min="1" />
+            </label>
+            <label>
+              Flash attention
+              <select name="flashAttention">
+                <option value="false">Off</option>
+                <option value="true">On</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              Memory map
+              <select name="mmap">
+                <option value="true">On</option>
+                <option value="false">Off</option>
+              </select>
+            </label>
+            <label>
+              Memory lock
+              <select name="mlock">
+                <option value="false">Off</option>
+                <option value="true">On</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Extra runtime args
+            <input name="serverExtraArgs" placeholder="--threads-http 4" />
+          </label>
+
+          <p class="section-title">Planner and Composer</p>
+          <div class="three">
+            <label>
+              Temperature
+              <input name="temperature" type="number" min="0" max="2" step="0.05" />
+            </label>
+            <label>
+              Chat tokens
+              <input name="maxTokens" type="number" min="32" />
+            </label>
+            <label>
+              Repair attempts
+              <input name="repairAttempts" type="number" min="0" max="5" />
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              Planner tokens
+              <input name="plannerMaxTokens" type="number" min="64" />
+            </label>
+            <label>
+              Planner timeout ms
+              <input name="plannerTimeoutMs" type="number" min="10000" step="1000" />
+            </label>
+          </div>
+
+          <div class="two">
+            <label>
+              Composer tokens
+              <input name="composerMaxTokens" type="number" min="64" />
+            </label>
+            <label>
+              Composer timeout ms
+              <input name="composerTimeoutMs" type="number" min="10000" step="1000" />
+            </label>
+          </div>
+
+          <label>
+            System prompt
+            <textarea name="systemPrompt" rows="7"></textarea>
+          </label>
+        </form>
+
+        <aside class="panel diagnostics">
+          <h2>Diagnostics</h2>
+          <label>
+            Query-plan test question
+            <input id="plannerQuestion" value="Kar Kar collection ajke holo?" />
+          </label>
+          <div class="button-row">
+            <button id="plannerTestBtn" type="button">Run Query Plan</button>
+            <button id="testBtn" class="button-secondary" type="button">Run Chat</button>
+          </div>
+
+          <label>
+            Chat test question
+            <input id="testQuestion" value="আজকের কালেকশন অবস্থা বলুন" />
+          </label>
+
+          <p class="section-title">Command Preview</p>
+          <pre id="commandBox">Loading...</pre>
+
+          <p class="section-title">Status</p>
+          <pre id="statusBox">Ready.</pre>
+
+          <p class="section-title">Test Result</p>
+          <pre id="testBox">No test run yet.</pre>
+        </aside>
+      </div>
+    </main>
+    <script src="/main.js"></script>
+  </body>
+</html>
